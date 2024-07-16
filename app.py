@@ -23,10 +23,11 @@ metrics = [
     'Средний срок экспозиции, вторичка'
 ]
 
-# Константа для определения пиков и спадов
+# Константа
 PERCENT_THRESHOLD = 0.03
+IS_DEBUG = False
 
-# Создание макета приложения
+
 app.layout = html.Div([
     html.H1("Визуализация данных по недвижимости", style={'textAlign': 'center'}),
     html.Div([
@@ -79,9 +80,8 @@ def update_graphs(selected_region):
                                    showarrow=True,
                                    arrowhead=1,
                                    font=dict(color='red'),
-                                #    yshift=20,
                                    ax=0,
-                                   ay=30)  # Смещение вниз для спада и позиция стрелки
+                                   ay=30)
 
         graphs.append(html.Div(dcc.Graph(figure=fig), style={'width': '100%', 'padding-bottom': '20px'}))
 
@@ -92,4 +92,4 @@ def update_graphs(selected_region):
     return graphs, population_display
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=IS_DEBUG)
