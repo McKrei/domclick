@@ -73,7 +73,7 @@ app.layout = html.Div(
                 dcc.Checklist(
                     id="toggle-peaks",
                     options=[{"label": "Показывать пики и спады", "value": "show"}],
-                    value=["show"],
+                    value=[],
                     style={"textAlign": "center", "font-size": "20px"},
                 )
             ],
