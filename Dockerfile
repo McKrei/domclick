@@ -11,10 +11,12 @@ RUN apt update -y && \
     musl-dev
 
 COPY requirements.txt requirements.txt
+RUN pip install gunicorn
 COPY real_estate_data.csv real_estate_data.csv
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-CMD ["bash", "-c", "python app.py"]
+# CMD ["bash", "-c", "python app.py"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8050", "app:server"]
