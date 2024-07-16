@@ -23,11 +23,11 @@ metrics = [
     'Средний срок экспозиции, вторичка'
 ]
 
-# Константа
+# Константа для определения пиков и спадов
 PERCENT_THRESHOLD = 0.03
-IS_DEBUG = False
+IS_DEBUG = True
 
-
+# Создание макета приложения
 app.layout = html.Div([
     html.H1("Визуализация данных по недвижимости", style={'textAlign': 'center'}),
     html.Div([
@@ -40,17 +40,27 @@ app.layout = html.Div([
         ),
         html.Div(id='population-display', style={'width': '50%', 'display': 'inline-block', 'padding-left': '20px', 'font-size': '20px', 'verticalAlign': 'middle'})
     ], style={'textAlign': 'center', 'padding': '20px'}),
+    html.Div([
+        dcc.Checklist(
+            id='toggle-peaks',
+            options=[{'label': 'Показывать пики и спады', 'value': 'show'}],
+            value=['show'],
+            style={'textAlign': 'center', 'font-size': '20px'}
+        )
+    ], style={'textAlign': 'center', 'padding': '20px'}),
     html.Div(id='graphs-container', style={'padding': '0 20%'})
 ])
 
 # Колбэк для обновления графиков и отображения населения
 @app.callback(
     [Output('graphs-container', 'children'), Output('population-display', 'children')],
-    [Input('region-dropdown', 'value')]
+    [Input('region-dropdown', 'value'), Input('toggle-peaks', 'value')]
 )
-def update_graphs(selected_region):
+def update_graphs(selected_region, toggle_peaks):
     filtered_data = data[data['Регион'] == selected_region]
     graphs = []
+
+    show_peaks = 'show' in toggle_peaks
 
     for metric in metrics:
         fig = px.line(filtered_data, x='Дата', y=metric, title=f'{metric} в {selected_region}',
@@ -58,32 +68,35 @@ def update_graphs(selected_region):
         fig.update_traces(texttemplate='%{y:.2s}', textposition='top right')
 
         # Поиск пиков и спадов с ограничением на PERCENT_THRESHOLD
-        for i in range(1, len(filtered_data) - 1):
-            prev_value = filtered_data[metric].iloc[i - 1]
-            curr_value = filtered_data[metric].iloc[i]
-            next_value = filtered_data[metric].iloc[i + 1]
+        if show_peaks:
+            for i in range(1, len(filtered_data) - 1):
+                prev_value = filtered_data[metric].iloc[i - 1]
+                curr_value = filtered_data[metric].iloc[i]
+                next_value = filtered_data[metric].iloc[i + 1]
 
-            if (curr_value > prev_value * (1 + PERCENT_THRESHOLD)) and (curr_value > next_value * (1 + PERCENT_THRESHOLD)):
-                peak_value = curr_value
-                formatted_value = f'{peak_value:,.0f}'.replace(',', ' ')
-                fig.add_annotation(x=filtered_data['Дата'].iloc[i],
-                                   y=peak_value,
-                                   text=formatted_value,
-                                   showarrow=True,
-                                   arrowhead=1)
-            elif (curr_value < prev_value * (1 - PERCENT_THRESHOLD)) and (curr_value < next_value * (1 - PERCENT_THRESHOLD)):
-                trough_value = curr_value
-                formatted_value = f'{trough_value:,.0f}'.replace(',', ' ')
-                fig.add_annotation(x=filtered_data['Дата'].iloc[i],
-                                   y=trough_value,
-                                   text=formatted_value,
-                                   showarrow=True,
-                                   arrowhead=1,
-                                   font=dict(color='red'),
-                                   ax=0,
-                                   ay=30)
+                if (curr_value > prev_value * (1 + PERCENT_THRESHOLD)) and (curr_value > next_value * (1 + PERCENT_THRESHOLD)):
+                    peak_value = curr_value
+                    formatted_value = f'{peak_value:,.0f}'.replace(',', ' ')
+                    fig.add_annotation(x=filtered_data['Дата'].iloc[i],
+                                       y=peak_value,
+                                       text=formatted_value,
+                                       showarrow=True,
+                                       arrowhead=1)
+                elif (curr_value < prev_value * (1 - PERCENT_THRESHOLD)) and (curr_value < next_value * (1 - PERCENT_THRESHOLD)):
+                    trough_value = curr_value
+                    formatted_value = f'{trough_value:,.0f}'.replace(',', ' ')
+                    fig.add_annotation(x=filtered_data['Дата'].iloc[i],
+                                       y=trough_value,
+                                       text=formatted_value,
+                                       showarrow=True,
+                                       arrowhead=1,
+                                       font=dict(color='red'),
+                                       ax=0,
+                                       ay=30)  # Смещение вниз для спада и позиция стрелки
 
-        graphs.append(html.Div(dcc.Graph(figure=fig), style={'width': '100%', 'padding-bottom': '20px'}))
+        graphs.append(html.Div(dcc.Graph(figure=fig, config={
+            'displaylogo': False,
+        }), style={'width': '100%', 'padding-bottom': '20px'}))
 
     # Получение последнего значения населения для выбранного региона
     latest_population = filtered_data['Население'].iloc[-1]
