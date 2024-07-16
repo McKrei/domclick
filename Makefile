@@ -6,7 +6,7 @@ CONTAINER_NAME = my-dash-app-container
 # Создание и запуск контейнера
 app:
 	docker build -t $(IMAGE_NAME) .
-	docker run -d -p 8050:8050 --name $(CONTAINER_NAME) $(IMAGE_NAME)
+	docker run -d -p 8051:8050 --name $(CONTAINER_NAME) $(IMAGE_NAME)
 
 # Остановка и удаление контейнера
 app-down:
