@@ -13,11 +13,9 @@ data = pd.read_csv("real_estate_data.csv")
 app = dash.Dash(__name__)
 app.title = "Статистика"  # Установка заголовка страницы
 
-# Установка иконки страницы
 app._favicon = 'icon.png'  # Название файла иконки, размещенного в папке assets
 
-# Определение списка регионов для выпадающего меню
-regions = data["Регион"].unique()
+regions = data.groupby("Регион").agg({"Население": "last"}).sort_values(by="Население", ascending=False).index
 
 # Определение метрик
 metrics = [
@@ -50,7 +48,8 @@ app.layout = html.Div(
                     value=[regions[0]],
                     multi=True,
                     style={
-                        "width": "50%",
+                        "width": "60%",
+                        "height": "1000%",
                         "display": "inline-block",
                         "verticalAlign": "middle",
                     },
